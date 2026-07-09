@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# 鍵・秘密情報（絶対にコミットしない）
+.env
+.env.*
+*.pem
+*.key
+
+# 一時ファイル
+tmp/
