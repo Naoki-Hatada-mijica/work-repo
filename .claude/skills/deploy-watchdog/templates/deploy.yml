@@ -1,0 +1,49 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Tokyo
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/ci.sh
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    environment: ${{ vars.DEPLOY_ENVIRONMENT || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: deploy
+        run: ./scripts/deploy.sh
+        env:
+          DEPLOY_TARGET: ${{ vars.DEPLOY_TARGET }}
+
+  post-deploy:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./scripts/smoke.sh
+      - name: notify slack
+        if: always()
+        env:
+          SLACK_WEBHOOK_NOTIFICATION_URL: ${{ secrets.SLACK_WEBHOOK_NOTIFICATION_URL }}
+        run: |
+          STATUS=${{ job.status }}
+          curl -X POST "$SLACK_WEBHOOK_NOTIFICATION_URL" -H 'content-type: application/json' \
+            -d "{\"text\":\"[deploy][$STATUS] ${{ github.repository }}@${{ github.sha }}\"}"
