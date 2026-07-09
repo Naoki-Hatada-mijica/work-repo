@@ -1,0 +1,4 @@
+interface:
+  display_name: "HTML Share"
+  short_description: "Publish HTML reports to the internal HTML Share GAS service."
+  default_prompt: "Publish this HTML report with HTML Share and return the share URL."

@@ -1,0 +1,28 @@
+[meta]
+timezone = "Asia/Tokyo"   # v0 literal 固定 (DST なし)、他 TZ は init.sh が reject
+
+[[task]]
+id = "weekly-deps-check"
+local_time = "MON 10:00"           # JST、init.sh が UTC cron に変換
+title = "weekly: dependencies の更新確認"
+body = """
+package.json / pyproject.toml / Gemfile.lock 等の outdated を確認し、必要なら更新 PR を作成してください。
+"""
+owner_tag = ""                    # body 1 行目に置く tag。"" / "[CC]" / "[CX]" / "[?]" / "[USER]"
+labels = []
+fingerprint_seed = "weekly-deps-check"
+cooldown_duration = "6d"
+monthly_limit = 4
+
+[[task]]
+id = "weekly-readme-deadlinks"
+local_time = "MON 11:00"
+title = "weekly: README の死リンク check"
+body = """
+README.md と docs/*.md の外部 URL を確認し、HTTP 4xx/5xx を返すものをリストアップして修正してください。
+"""
+owner_tag = ""
+labels = []
+fingerprint_seed = "weekly-readme-deadlinks"
+cooldown_duration = "6d"
+monthly_limit = 4
