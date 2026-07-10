@@ -33,3 +33,12 @@
 - 認証 JSON は**作成時のポップアップでしか DL できない**（後から表示・DL 不可の仕様）。
 - 私が操作する自動化タブ（claude-in-chrome）では DL がブロックされる。ユーザー自身の通常タブで作成→その場で DL してもらう必要があった。
 - Python 3.9 は EOL 警告が出るが動作に支障なし。
+
+## 書き込み実装・スキル化完了（2026-07-10）
+- 共通処理を `gcal_common.py` に切り出し、`gcal_match.py`（読み取り整形）／`gcal_register.py`（フェーズ1登録）／`gcal_confirm.py`（フェーズ2確定）が import して使う構成。
+- **下見（apply=false）→ 内容確認 → 実行（apply=true）の二段構え**を全書き込みで統一。削除は破壊的操作なので必ず対象を列挙して確認。
+- 面談調整ブロックは `transparency:transparent`（仮押さえ＝他予定をブロックしない）。色分け：調整=バナナ(5)／確定=トマト(11)／バッファ=グラファイト(8)。
+- 削除対象の特定は **events.list の q（全文検索）で拾い、summary の完全一致でフィルタ**（部分一致だと別候補者を巻き込むため）。
+- freebusy の calendars キーは `primary` ではなく実アドレスで返ることがある → `next(iter(cals))` でフォールバック。
+- 実カレンダーで登録→確定→削除まで通し検証済み。テストイベント（ZZ検証削除用）は後片付けで全削除。
+- スキルは `.claude/skills/interview-schedule-coordination/` に scripts・references/setup.md を同梱して自己完結。scripts を実行する Python は script 同ディレクトリを sys.path に含むため、どの cwd からでも import が通る。
