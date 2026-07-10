@@ -59,22 +59,44 @@ def fmt_date_jp(date_str):
 
 
 def _busy_intervals(svc, day_start, day_end):
-    body = {
-        "timeMin": day_start.isoformat(),
-        "timeMax": day_end.isoformat(),
-        "items": [{"id": CALENDAR_ID}],
-    }
-    fb = svc.freebusy().query(body=body).execute()
+    """空き計算に使う「埋まっている」区間を返す。
 
-    def parse(s):
-        # freebusy は UTC の 'Z' 表記で返すことがある → JST に正規化
+    freebusy ではなく events.list を使い、予定の種類で判定する：
+      - キャンセル済みは無視
+      - 「空き時間」表示（transparency=transparent）の予定は無視
+      - **面談調整ブロック（タイトルが ADJUST_PREFIX で始まる）は無視** →
+        面談調整ブロックは実時間を確保（不透明）しつつ、空き計算では数えないので
+        同じ枠を複数候補者へ並行提案でき、面談調整同士は重複してよい。
+      - それ以外の予定（確定面談・通常予定・バッファ・終日の予定）は busy。
+    """
+    def parse_dt(s):
         return dt.datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(JST)
 
-    key = CALENDAR_ID
-    cals = fb["calendars"]
-    if key not in cals:  # primary は実アドレスで返ることがある
-        key = next(iter(cals))
-    return [(parse(b["start"]), parse(b["end"])) for b in cals[key]["busy"]]
+    evs = svc.events().list(
+        calendarId=CALENDAR_ID,
+        timeMin=day_start.isoformat(),
+        timeMax=day_end.isoformat(),
+        singleEvents=True,
+        orderBy="startTime",
+        maxResults=250,
+    ).execute().get("items", [])
+
+    out = []
+    for e in evs:
+        if e.get("status") == "cancelled":
+            continue
+        if e.get("transparency") == "transparent":
+            continue
+        if e.get("summary", "").startswith(ADJUST_PREFIX):
+            continue  # 面談調整ブロックは空き計算に含めない（重複OK）
+        s, en = e["start"], e["end"]
+        if "dateTime" in s:
+            bs, be = parse_dt(s["dateTime"]), parse_dt(en["dateTime"])
+        else:  # 終日予定 → その日全体を busy（end.date は排他的）
+            bs = dt.datetime.fromisoformat(f"{s['date']}T00:00:00{TZ}")
+            be = dt.datetime.fromisoformat(f"{en['date']}T00:00:00{TZ}")
+        out.append((bs, be))
+    return out
 
 
 def available_ranges(svc, date_str, start_t, end_t):
