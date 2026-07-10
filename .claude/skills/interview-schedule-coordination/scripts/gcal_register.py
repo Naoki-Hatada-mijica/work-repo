@@ -45,8 +45,11 @@ def create_event(svc, date_str, a, b, title):
         "start": {"dateTime": a.isoformat(), "timeZone": TZID},
         "end": {"dateTime": b.isoformat(), "timeZone": TZID},
         "colorId": COLOR_ADJUST,
-        "transparency": "transparent",  # 仮押さえ（他予定をブロックしない）
-        "description": "面談日程調整スキルが自動作成した仮押さえブロックです。",
+        # 不透明＝時間をしっかり確保し、他の予定が入らないようにする。
+        # 面談調整ブロック同士の重複は、空き計算側でタイトル（ADJUST_PREFIX）を
+        # 無視することで許容する（gcal_common._busy_intervals 参照）。
+        "transparency": "opaque",
+        "description": "面談日程調整スキルが自動作成した面談調整ブロックです。",
     }
     return svc.events().insert(calendarId=CALENDAR_ID, body=body).execute()
 
