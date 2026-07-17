@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>取適法対応 変更点まとめ｜業務委託基本契約書（顧客企業様用）</title>
+<style>
+  :root{
+    --bg:#f5f6f8; --card:#ffffff; --ink:#1f2733; --sub:#5b6675;
+    --line:#e3e7ee; --brand:#2b6cb0; --brand-bg:#eaf2fb;
+    --add:#1f9d55; --add-bg:#e9f7ef; --del:#c53030; --del-bg:#fdecec;
+    --warn:#b7791f; --warn-bg:#fdf6e3;
+    --shadow:0 1px 3px rgba(20,30,50,.06),0 6px 20px rgba(20,30,50,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,system-ui,sans-serif;
+    line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 20px 64px;}
+  header.hero{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:28px 30px;box-shadow:var(--shadow);margin-bottom:22px;}
+  .eyebrow{color:var(--brand);font-weight:700;font-size:13px;letter-spacing:.06em;margin:0 0 6px;}
+  h1{font-size:23px;margin:0 0 14px;letter-spacing:.01em;}
+  .flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .pill{border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:13px;background:#fbfcfe;color:var(--sub);}
+  .pill.now{border-color:var(--brand);background:var(--brand-bg);color:var(--brand);font-weight:700;}
+  .arrow{color:var(--brand);font-weight:800;font-size:18px;}
+  h2{font-size:17px;margin:34px 0 12px;padding-left:12px;border-left:4px solid var(--brand);}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow);margin-bottom:14px;}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media(max-width:680px){.grid3{grid-template-columns:1fr;}}
+  .num{font-size:12px;font-weight:800;color:var(--brand);background:var(--brand-bg);
+    width:26px;height:26px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:8px;}
+  .card h3{font-size:15px;margin:0 0 6px;}
+  .card p{margin:0;color:var(--sub);font-size:13.5px;}
+  table{width:100%;border-collapse:collapse;font-size:14px;overflow:hidden;border-radius:10px;}
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+  th,td{text-align:left;padding:11px 13px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:#f7f9fc;font-size:12.5px;color:var(--sub);font-weight:700;white-space:nowrap;}
+  tr:last-child td{border-bottom:none;}
+  .tag{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap;}
+  .tag.law{background:var(--add-bg);color:var(--add);}
+  .badge-add{color:var(--add);font-weight:700;}
+  .badge-del{color:var(--del);font-weight:700;}
+  ul.clean{margin:8px 0 0;padding-left:0;list-style:none;}
+  ul.clean li{padding:6px 0 6px 26px;position:relative;font-size:14px;border-bottom:1px dashed var(--line);}
+  ul.clean li:last-child{border-bottom:none;}
+  ul.clean li::before{content:"";position:absolute;left:4px;top:14px;width:8px;height:8px;border-radius:50%;}
+  li.add::before{background:var(--add);} li.del::before{background:var(--del);} li.keep::before{background:#9aa6b6;}
+  .strike{text-decoration:line-through;color:var(--del);}
+  .note{background:var(--warn-bg);border:1px solid #f0e2bd;border-radius:12px;padding:14px 18px;font-size:13.5px;color:#7a5a12;}
+  .note b{color:#5c4409;}
+  .renumber{display:flex;gap:10px;align-items:center;font-size:14px;padding:8px 0;border-bottom:1px dashed var(--line);}
+  .renumber:last-child{border-bottom:none;}
+  .old{color:var(--sub);} .newc{font-weight:700;color:var(--brand);}
+  .ok{color:var(--add);font-weight:700;} .cau{color:var(--warn);font-weight:700;} .ng{color:var(--del);font-weight:700;}
+  footer{margin-top:30px;color:var(--sub);font-size:12.5px;text-align:center;line-height:1.7;}
+  .kw{background:var(--brand-bg);color:var(--brand);border-radius:5px;padding:0 5px;font-weight:700;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <p class="eyebrow">契約書フォーマット改訂サマリ</p>
+    <h1>取適法対応：業務委託基本契約書（顧客企業様用）の変更点</h1>
+    <div class="flow">
+      <span class="pill">202507 改訂版（旧）</span>
+      <span class="arrow">→</span>
+      <span class="pill now">202607 取適法対応版（確定）</span>
+    </div>
+    <p style="margin:14px 0 0;color:var(--sub);font-size:13.5px;">
+      甲＝顧客企業（発注者）／乙＝mijica（受託者）の準委任・SES契約。今回の追加はすべて<b style="color:var(--ink)">甲（クライアント）を縛り、mijicaを守る</b>内容です。
+    </p>
+  </header>
+
+  <h2>変更は大きく3つ</h2>
+  <div class="grid3">
+    <div class="card">
+      <span class="num">1</span>
+      <h3>第23条を新設</h3>
+      <p>「取引適正化法の遵守」を1条まるごと追加（全7項）。</p>
+    </div>
+    <div class="card">
+      <span class="num">2</span>
+      <h3>条番号の繰り下げ</h3>
+      <p>1条増えたぶん、後ろの2条がずれただけ。</p>
+    </div>
+    <div class="card">
+      <span class="num">3</span>
+      <h3>残存義務を更新</h3>
+      <p>第21条に、契約終了後も残る条文を追加。</p>
+    </div>
+  </div>
+
+  <h2>① 新設：第23条「取引適正化法の遵守」</h2>
+  <div class="card">
+    <p style="margin:0 0 14px;color:var(--sub);font-size:13.5px;">7項すべてが取適法（旧・下請法）に<b style="color:var(--ink)">実際に定められた内容</b>です。独自に盛った過剰な条項ではありません。</p>
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>項</th><th>内容（かみ砕くと）</th><th>取適法の根拠</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>取適法の適用がある場合、甲は同法を守る（総則）</td><td><span class="tag law">法定</span></td></tr>
+        <tr><td>2</td><td>発注時に、業務内容・料金・支払期日などを書面/メールで乙に交付</td><td><span class="tag law">発注書面</span></td></tr>
+        <tr><td>3</td><td>支払期日は「役務提供日から60日以内」で定める</td><td><span class="tag law">支払期日</span></td></tr>
+        <tr><td>4</td><td>手形ではなく現金（銀行振込）で支払う</td><td><span class="tag law">手形不使用</span></td></tr>
+        <tr><td>5</td><td>禁止事項5つ（減額／買いたたき／購入・利用強制／不当な利益提供/不当なやり直し）</td><td><span class="tag law">禁止行為</span></td></tr>
+        <tr><td>6</td><td>コスト上昇時、値上げ協議に応じる（一方的据え置き禁止＝価格転嫁）</td><td><span class="tag law">改正で強化</span></td></tr>
+        <tr><td>7</td><td>公取委等へ通報しても報復（取引削減・停止）しない</td><td><span class="tag law">報復禁止</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <h2>② 条番号の繰り下げ（第1〜22条は変更なし）</h2>
+  <div class="card">
+    <div class="renumber"><span class="badge-add">＋新設</span><span class="newc">第23条（取引適正化法の遵守）</span></div>
+    <div class="renumber"><span class="old">旧・第23条 準拠法・合意管轄</span><span class="arrow">→</span><span class="newc">第24条</span></div>
+    <div class="renumber"><span class="old">旧・第24条 協議解決</span><span class="arrow">→</span><span class="newc">第25条</span></div>
+  </div>
+
+  <h2>③ 準委任（SES）に純化 ＋ 締切日みなしの微調整</h2>
+  <div class="card">
+    <p style="margin:0 0 4px;font-weight:700;">請負・物寄りの言葉は入れていません</p>
+    <ul class="clean">
+      <li class="del"><span class="strike">受領拒否・返品・成果物の受領</span> … 役務にはそぐわないため<span class="badge-del">不採用</span></li>
+      <li class="keep">支払期日は「<span class="kw">役務の提供をした日</span>」を起点に統一（成果物受領ではない）</li>
+      <li class="add">継続役務の<b>締切日みなし</b>のただし書きを第23条3項に追記<span class="badge-add">＋追加</span></li>
+      <li class="add">締切日を定めなければ<b>毎月末日を締切日</b>とする既定を追記（月末起点を基本契約だけで担保）<span class="badge-add">＋追加</span></li>
+    </ul>
+  </div>
+
+  <h2>支払サイトの適法性 早見表（月末締めの場合）</h2>
+  <div class="card">
+    <div class="tablewrap">
+    <table>
+      <thead><tr><th>支払条件</th><th>締め日からの日数</th><th>取適法（60日ルール）</th></tr></thead>
+      <tbody>
+        <tr><td>翌月末払い <span style="color:var(--sub)">（＝御社の現運用）</span></td><td>約30日</td><td><span class="ok">✅ OK</span></td></tr>
+        <tr><td>翌々月10日払い</td><td>約40日</td><td><span class="ok">✅ OK</span></td></tr>
+        <tr><td>翌々月末払い</td><td>約60〜61日</td><td><span class="cau">⚠️ 月により1日超過・注意</span></td></tr>
+        <tr><td>翌々々月払い</td><td>約90日</td><td><span class="ng">✕ NG</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="note" style="margin-top:14px;">
+      <b>ポイント：</b>60日は「締め日」ではなく「役務を提供した日」から数えます。ただし継続的な月次役務（常駐SES）は「<b>月末締め＝月末に受領</b>」とみなせるため、御社の <b>7/31締め・8/31払い</b> は31日ある月をまたいでも問題ありません（追記したただし書きで条文上も明確化）。なお、締切日を別途定めない場合は<b>毎月末日が締切日（既定）</b>となり、月末起点が基本契約だけで担保されます。
+    </div>
+  </div>
+
+  <h2>変わっていないところ</h2>
+  <div class="card">
+    <ul class="clean">
+      <li class="keep">第1条〜第22条の中身は<b>一切変更なし</b></li>
+      <li class="keep">フォント・文字サイズ・レイアウトも元のまま</li>
+      <li class="keep">支払サイト（翌月末払い＝30日）は元々セーフ。実務への影響なし</li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <b>送付前のおすすめ確認：</b> 適用可否は資本金の区分で決まるため、最終的には顧問弁護士のレビューを入れると安全です。条文に正式な法律番号を書き込む場合も弁護士確認が前提です。／元雛形の第9・10条には「完成したシステム」「納入物」など成果物前提の文言が残っています（今回は取適法対応が主目的のため未修正）。
+  </div>
+
+  <footer>
+    確定版：【雛形】業務委託基本契約書（顧客企業様用）202607取適法対応版.docx<br>
+    株式会社mijica ／ 顧客企業様用 業務委託基本契約書（準委任・SES）
+  </footer>
+
+</div>
+</body>
+</html>
