@@ -21,7 +21,15 @@ ws = wb[SHEET] if (SHEET and SHEET in wb.sheetnames) else wb.worksheets[0]
 FONT = ('"Meiryo","メイリオ","游ゴシック","Yu Gothic",'
         '"Hiragino Kaku Gothic ProN","Hiragino Sans",sans-serif')
 KEEP_TOGETHER = True   # 案件をページ途中で分割しない（ページに収まらない案件は次ページへ）
-ROW_SCALE = 0.9        # 行の高さの余白を少し詰める（文字サイズは変えない）
+ROW_SCALE = 1.22       # 行の高さ（文字サイズは変えない）。1.0＝Excelどおり、大きいほど行間にゆとり
+LINE_HEIGHT = 1.6      # 折り返し本文の行送り。ROW_SCALE とセットで調整する
+CELL_PAD_Y = 2         # セル上下の余白(px)
+
+# ===== 罫線の強弱 =====
+# 外枠と案件の切り替わりは実線（太め）、案件の中は薄い点線にして、紙面を軽くする。
+LIGHT_INNER_BORDER = True     # 案件の中の細い罫線を点線に落とす
+INNER_BORDER = '1px dotted #000'      # 案件の中（黒の点線）
+STRONG_MIN_PX = 1.2           # 外枠・案件の区切りは最低この太さの実線にする
 
 # ===== 1. 印刷範囲を自動検出（印刷範囲指定→なければ内容＋罫線＋塗りの範囲）=====
 def content_bounds():
@@ -150,6 +158,33 @@ if proj_starts:
 else:
     BLOCKS = [(MINR, MAXR, False)]
 
+# 罫線の強弱用：ブロックの境界行と、「案件の中」の行を控えておく。
+# 点線にするのは案件ブロックの中だけ。見出し部（氏名・資格・スキル要約など）と
+# スキル評価表は、箱ごとの区切りが見えたほうが読みやすいので Excel の罫線のまま。
+BOUND_TOP = {r0 for (r0, _r1, _k) in BLOCKS} | {MINR}
+BOUND_BOTTOM = {r1 for (_r0, r1, _k) in BLOCKS} | {MAXR}
+INNER_ROWS = set()
+for (r0, r1, keep) in BLOCKS:
+    if keep:   # keep=True＝案件ブロック
+        INNER_ROWS.update(range(r0, r1 + 1))
+
+# 「業務内容」列の位置を探す。ここから右が案件の中身＝点線、
+# 左にある項番(No)・期間の欄は実線（太線）にして、案件の枠組みをはっきりさせる。
+CONTENT_COL = None
+_hdr_end = proj_starts[0] if proj_starts else MAXR + 1
+for _r in range(MINR, _hdr_end):
+    for _c in range(MINC, MAXC + 1):
+        _v = ws.cell(_r, _c).value
+        if isinstance(_v, str) and any(k in _v for k in ('業務内容', '職務内容', '業務経歴')):
+            CONTENT_COL = _c
+            for _rng in ws.merged_cells.ranges:   # 結合セルなら左端の列を採用
+                if _rng.min_row <= _r <= _rng.max_row and _rng.min_col <= _c <= _rng.max_col:
+                    CONTENT_COL = _rng.min_col
+                    break
+            break
+    if CONTENT_COL:
+        break
+
 # ===== 3. 列幅・行高 =====
 DEFAULT_W = ws.sheet_format.defaultColWidth or 8.43
 width_map = {}
@@ -192,24 +227,116 @@ BSTYLE = {'thin': '1px solid', 'hair': '0.5px solid', 'medium': '1.5px solid',
           'dashed': '1px dashed', 'dashDot': '1px dashed', 'mediumDashed': '1.5px dashed',
           'slantDashDot': '1px dashed'}
 
-def argb(color):
-    rgb = getattr(color, 'rgb', None)
-    if isinstance(rgb, str) and len(rgb) == 8:
-        return '#' + rgb[2:]
-    return None
+# --- テーマ色パレット（theme1.xml の clrScheme を読む）---
+# Excel の theme 番号 → 配色名の対応は 0/1 と 2/3 が入れ替わる（既知の仕様）
+THEME_ORDER = ['lt1', 'dk1', 'lt2', 'dk2', 'accent1', 'accent2', 'accent3',
+               'accent4', 'accent5', 'accent6', 'hlink', 'folHlink']
+THEME_FALLBACK = {'lt1': 'FFFFFF', 'dk1': '000000', 'lt2': 'EEECE1', 'dk2': '1F497D',
+                  'accent1': '4F81BD', 'accent2': 'C0504D', 'accent3': '9BBB59',
+                  'accent4': '8064A2', 'accent5': '4BACC6', 'accent6': 'F79646',
+                  'hlink': '0000FF', 'folHlink': '800080'}
 
-def border_css(side):
+def load_theme_colors():
+    palette = dict(THEME_FALLBACK)
+    raw = getattr(wb, 'loaded_theme', None)
+    if not raw:
+        return palette
+    try:
+        import xml.etree.ElementTree as ET
+        ns = '{http://schemas.openxmlformats.org/drawingml/2006/main}'
+        root = ET.fromstring(raw)
+        scheme = root.find(f'.//{ns}clrScheme')
+        if scheme is None:
+            return palette
+        for node in scheme:
+            name = node.tag.split('}')[-1]
+            srgb = node.find(f'{ns}srgbClr')
+            sysc = node.find(f'{ns}sysClr')
+            if srgb is not None and srgb.get('val'):
+                palette[name] = srgb.get('val')
+            elif sysc is not None and sysc.get('lastClr'):
+                palette[name] = sysc.get('lastClr')
+    except Exception:
+        pass
+    return palette
+
+THEME = load_theme_colors()
+
+def apply_tint(hex6, tint):
+    """Excel の濃淡（tint）を適用する。明度を白／黒方向へ寄せる仕様どおりの計算。"""
+    if not tint:
+        return hex6
+    import colorsys
+    r, g, b = (int(hex6[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    l = l * (1 + tint) if tint < 0 else l * (1 - tint) + tint
+    r, g, b = colorsys.hls_to_rgb(h, min(max(l, 0.0), 1.0), s)
+    return '{:02X}{:02X}{:02X}'.format(*(round(v * 255) for v in (r, g, b)))
+
+def argb(color):
+    """セル色を #RRGGBB に解決する。RGB 直指定・テーマ色・インデックス色に対応。"""
+    if color is None:
+        return None
+    ctype = getattr(color, 'type', None)
+    tint = getattr(color, 'tint', 0.0) or 0.0
+    base = None
+    if ctype == 'theme':
+        idx = getattr(color, 'theme', None)
+        if isinstance(idx, int) and 0 <= idx < len(THEME_ORDER):
+            base = THEME[THEME_ORDER[idx]]
+    elif ctype == 'indexed':
+        from openpyxl.styles.colors import COLOR_INDEX
+        idx = getattr(color, 'indexed', None)
+        if isinstance(idx, int) and 0 <= idx < len(COLOR_INDEX):
+            v = COLOR_INDEX[idx]
+            if isinstance(v, str) and len(v) == 8:
+                base = v[2:]
+    else:
+        rgb = getattr(color, 'rgb', None)
+        if isinstance(rgb, str) and len(rgb) == 8:
+            base = rgb[2:]
+    if not base:
+        return None
+    return '#' + apply_tint(base.upper(), tint)
+
+THIN_STYLES = ('thin', 'hair', 'dotted', 'dashed', 'dashDot', 'slantDashDot')
+
+def border_css(side, strong=True, inner=False):
+    """罫線をCSSにする。
+      strong=True  … 外枠・案件の区切り。細くても最低 STRONG_MIN_PX の実線にする
+      inner=True   … 案件の中。細い罫線は薄い点線に落として紙面を軽くする
+    """
     if not side or not side.style:
         return '0'
-    return f'{BSTYLE.get(side.style, "1px solid")} {argb(side.color) or "#000"}'
+    if inner and LIGHT_INNER_BORDER and side.style in THIN_STYLES:
+        return INNER_BORDER
+    css = BSTYLE.get(side.style, '1px solid')
+    color = argb(side.color) or '#000'
+    if strong and side.style in ('thin', 'hair'):
+        css = f'{STRONG_MIN_PX}px solid'
+    return f'{css} {color}'
 
-def cell_style(cell):
+def cell_style(cell, r=None, c=None, span=(1, 1)):
     s = []
     b = cell.border
-    s.append(f'border-top:{border_css(b.top)}')
-    s.append(f'border-bottom:{border_css(b.bottom)}')
-    s.append(f'border-left:{border_css(b.left)}')
-    s.append(f'border-right:{border_css(b.right)}')
+    if r is None:
+        r, c = cell.row, cell.column
+    rb = r + span[0] - 1          # このセルの下端の行
+    cr = c + span[1] - 1          # このセルの右端の列
+    # 点線にするのは案件ブロックの中で、かつ「業務内容」列から右だけ。
+    # 項番(No)・期間の欄は案件の中でも実線（太線）のまま残す。
+    in_proj = (r in INNER_ROWS
+               and (CONTENT_COL is None or c >= CONTENT_COL))
+    idx_area = (r in INNER_ROWS and CONTENT_COL is not None and cr < CONTENT_COL)
+    # 外枠・案件の切り替わり・項番/期間欄＝実線（太め）、案件の中身＝点線
+    top_strong = (r in BOUND_TOP) or idx_area
+    bot_strong = (rb in BOUND_BOTTOM) or idx_area
+    left_strong = (c == MINC) or idx_area
+    right_strong = (cr == MAXC) or idx_area or (CONTENT_COL is not None and cr == CONTENT_COL - 1)
+    s.append(f'border-top:{border_css(b.top, top_strong, in_proj and not top_strong)}')
+    s.append(f'border-bottom:{border_css(b.bottom, bot_strong, in_proj and not bot_strong)}')
+    s.append(f'border-left:{border_css(b.left, left_strong, in_proj and not left_strong)}')
+    s.append(f'border-right:{border_css(b.right, right_strong, in_proj and not right_strong)}')
     f = cell.font
     if f:
         sz = norm_size(cell)  # 本文サイズを標準に統一
@@ -277,7 +404,7 @@ def render_rows(r0, r1):
                 attrs += f' rowspan="{span[0]}"'
             if span[1] > 1:
                 attrs += f' colspan="{span[1]}"'
-            style = cell_style(cell)
+            style = cell_style(cell, r, c, span)
             # セルが占める行がすべて非表示なら中身を畳む（高さを持たせない）
             if sum(row_px(rr) for rr in range(r, r + span[0])) == 0:
                 style += ';font-size:0;line-height:0;padding:0'
@@ -310,7 +437,7 @@ body {{ font-family: {FONT}; -webkit-print-color-adjust: exact; print-color-adju
 .sheet {{ zoom: {zoom}; width: {table_w}px; margin: 0 auto; }}
 table {{ border-collapse: collapse; table-layout: fixed; }}
 tbody.keep {{ break-inside: avoid; page-break-inside: avoid; }}
-td {{ padding: 0 1px; line-height: 1.12; font-family: {FONT}; overflow: hidden; }}
+td {{ padding: {CELL_PAD_Y}px 2px; line-height: {LINE_HEIGHT}; font-family: {FONT}; overflow: hidden; }}
 </style>"""
 
 parts = [css, f'<div class="sheet"><table>{COLGROUP}']
